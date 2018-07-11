@@ -89,7 +89,7 @@ alpha_PT=1.26
 x_LAD=1 
 
 # Bare soil roughness lenght (m)
-z0_soil=0.01 
+z0_soil=0.005
 
 # Primary land cover IGBP Land Cover Type Classification: CROP=12, GRASS=10, SHRUB=6, CONIFER=1, BROADLEAVED=4
 landcover=4

@@ -51,26 +51,16 @@ import pyTSEB.clumping_index as CI
 import pyTSEB.TSEB as tseb
 
 # ==============================================================================
-# List of constants used in TSEB model and sub-routines
+# List of constants used in ESVEP model and sub-routines
 # ==============================================================================
 # Change threshold in  Monin-Obukhov lengh to stop the iterations
-L_thres = 0.00001
+L_thres = tseb.L_thres
 # mimimun allowed friction velocity
-u_friction_min = 0.01
+u_friction_min = tseb.u_friction_min
 # Maximum number of interations
-ITERATIONS = 100
+ITERATIONS = tseb.ITERATIONS
 # kB coefficient
-kB = 2.0
-# Stephan Boltzmann constant (W m-2 K-4)
-sb = 5.670373e-8
-
-# Resistance formulation constants
-KUSTAS_NORMAN_1999 = 0
-CHOUDHURY_MONTEITH_1988 = 1
-MCNAUGHTON_VANDERHURK = 2
-CHOUDHURY_MONTEITH_ALPHA_1988 = 3
-HADHIGHI_AND_OR_2015 = 4
-
+kB = 2.2
 
 def ESVEP(
     Tr_K,
