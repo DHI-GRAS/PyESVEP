@@ -61,6 +61,8 @@ u_friction_min = tseb.u_friction_min
 ITERATIONS = tseb.ITERATIONS
 # kB coefficient
 kB = 2.2
+# Invalid quality flag
+F_INVALID = tseb.F_INVALID
 
 def ESVEP(
     Tr_K,
@@ -290,14 +292,14 @@ def ESVEP(
     # Loop for estimating stability.
     # Stops when difference in consecutives L is below a given threshold
     for n_iterations in range(max_iterations):
-        i = flag != 255
+        i = flag != F_INVALID
         if np.all(L_diff[i] < L_thres):
             if L_diff[i].size == 0:
                 print("Finished iterations with no valid solution")
             else:
                 print("Finished interations with a max. L diff: " + str(np.max(L_diff[i])))
             break
-        i = np.logical_and(L_diff >= L_thres, flag != 255)
+        i = np.logical_and(L_diff >= L_thres, flag != F_INVALID)
         print("Iteration " + str(n_iterations) + ", max. L diff: " + str(np.max(L_diff[i])))
         iterations[i] = n_iterations
 
