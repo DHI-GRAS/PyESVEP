@@ -134,6 +134,7 @@ class PyESVEP(PyTSEB):
             # miscaleneous
             ('omega0', S_N),  # nadir view vegetation clumping factor
             ('L', S_A),  # Monin Obukhov Length
+            ('u_friction', S_A),  # Friction velocity (m/s)
             ('theta_s1', S_N),  # Sun zenith angle
             ('F', S_N),  # Leaf Area Index
             ('z_0M', S_N),  # Aerodynamic roughness length for momentum trasport (m)
@@ -165,8 +166,8 @@ class PyESVEP(PyTSEB):
          out_data['T_vd'][i], out_data['T_sw'][i], out_data['T_vd'][i], out_data['T_star'][i],
          out_data['Ln_S1'][i], out_data['Ln_C1'][i], out_data['LE_C1'][i], out_data['H_C1'][i],
          out_data['LE_S1'][i], out_data['H_S1'][i], out_data['G1'][i], out_data['r_vw'][i],
-         out_data['r_vd'][i], out_data['r_av'][i], out_data['r_as'][i], out_data['L'][i],
-         out_data['n_iterations'][i]] = \
+         out_data['r_vd'][i], out_data['r_av'][i], out_data['r_as'][i], out_data['u_friction'][i],
+         out_data['L'][i], out_data['n_iterations'][i]] = \
                  ESVEP.ESVEP(in_data['T_R1'][i],
                              in_data['VZA'][i],
                              in_data['T_A1'][i],

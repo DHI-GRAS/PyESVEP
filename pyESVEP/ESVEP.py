@@ -384,10 +384,10 @@ def ESVEP(
             # Calculate again the friction velocity with the new stability
             # correctios
             u_friction[i] = MO.calc_u_star(u[i], z_u[i], L[i], d_0[i], z_0M[i])
-            u_friction = np.asarray(np.maximum(u_friction_min, u_friction))
+            u_friction[i] = np.asarray(np.maximum(u_friction_min, u_friction[i]))
             u_friction_s[i] = MO.calc_u_star(u[i], z_u[i], L[i], np.zeros(d_0[i].shape),
                                           np.zeros(z_0M[i].shape) + 0.005)
-            u_friction_s = np.asarray(np.maximum(u_friction_min, u_friction_s))
+            u_friction_s[i] = np.asarray(np.maximum(u_friction_min, u_friction_s[i]))
 
     return [flag, T_S, T_C,  T_sd, T_vd, T_sw, T_vw, T_star, Ln_S, Ln_C, LE_C, H_C, LE_S, H_S, G, 
-            r_vw, r_vd, r_av, r_as, L, n_iterations]
+            r_vw, r_vd, r_av, r_as, u_friction, L, n_iterations]
