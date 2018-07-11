@@ -26,6 +26,7 @@ import numpy as np
 from pyTSEB.PyTSEB import PyTSEB, S_N, S_P, S_A
 
 from pyESVEP import ESVEP
+from pyTSEB import TSEB
 
 
 class PyESVEP(PyTSEB):
@@ -209,4 +210,24 @@ class PyESVEP(PyTSEB):
         None
         '''
 
-        pass
+        [out_data['flag'][i],
+         out_data['Ln_S1'][i],
+         out_data['LE_S1'][i],
+         out_data['H_S1'][i],
+         out_data['G1'][i],
+         out_data['r_as'][i],
+         out_data['u_friction'][i],
+         out_data['L'][i],
+         out_data['n_iterations'][i]] = TSEB.OSEB(in_data['T_R1'][i],
+                                                  in_data['T_A1'][i],
+                                                  in_data['u'][i],
+                                                  in_data['ea'][i],
+                                                  in_data['p'][i],
+                                                  out_data['Sn_S1'][i],
+                                                  in_data['L_dn'][i],
+                                                  in_data['emis_S'][i],
+                                                  out_data['z_0M'][i],
+                                                  out_data['d_0'][i],
+                                                  in_data['z_u'][i],
+                                                  in_data['z_T'][i],
+                                                  calcG_params=model_params["calcG_params"])
