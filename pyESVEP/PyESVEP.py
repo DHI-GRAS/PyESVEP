@@ -82,10 +82,11 @@ class PyESVEP(PyTSEB):
             if not success:
                 val = np.ones(dims)
                 success = True
+            inputs = {field: val}
         else:
             success = False
-            val = None
-        return success, val
+            inputs = None
+        return success, inputs
 
     def _get_output_structure(self):
         ''' Output fields' names for ESVEP model.
