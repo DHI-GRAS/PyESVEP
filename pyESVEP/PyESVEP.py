@@ -191,7 +191,8 @@ class PyESVEP(PyTSEB):
                              f_c=in_data['f_c'][i],
                              f_g=in_data['f_g'][i],
                              w_C=in_data['w_C'][i],
-                             calcG_params=model_params["calcG_params"])
+                             calcG_params=[model_params["calcG_params"][0],
+                                           model_params["calcG_params"][1][i]])
 
     def _call_flux_model_soil(self, in_data, out_data, model_params, i):
         ''' Call a OSEB model to calculate soil fluxes for data points containing no vegetation.
@@ -231,4 +232,5 @@ class PyESVEP(PyTSEB):
                                                   out_data['d_0'][i],
                                                   in_data['z_u'][i],
                                                   in_data['z_T'][i],
-                                                  calcG_params=model_params["calcG_params"])
+                                                  calcG_params=[model_params["calcG_params"][0],
+                                                                model_params["calcG_params"][1][i]])
