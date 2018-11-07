@@ -260,14 +260,14 @@ def ESVEP(
         max_iterations = 1  # No iteration
 
     # Calculate the general parameters
-    rho = met.calc_rho(p, ea, T_A_K)  # Air density
-    c_p = met.calc_c_p(p, ea)  # Heat capacity of air
-    z_0H = res.calc_z_0H(z_0M, kB=kB)  # Roughness length for heat transport
+    rho = met.calc_rho(p, ea, T_A_K)  # Air density (kg m-3)
+    c_p = met.calc_c_p(p, ea) # Heat capacity of air (J/(kg·K))
+    z_0H = res.calc_z_0H(z_0M, kB=kB)  # Roughness length for heat transport 
     z_0H_soil = res.calc_z_0H(z0_soil, kB=kB)  # Roughness length for heat transport
-    s = met.calc_delta_vapor_pressure(T_A_K) * 10  # slope of the saturation pressure curve (mb C-1)
-    lbd = met.calc_lambda(T_A_K)  # latent heat of vaporisation (MJ./kg)
-    gama = met.calc_psicr(p, lbd)  # psychrometric constant (mb C-1)
-    vpd = met.calc_vapor_pressure(T_A_K) - ea  # vapor pressure deficit (mb)
+    s = met.calc_delta_vapor_pressure(T_A_K)  # slope of the saturation pressure curve (kPa K-1)
+    lbd = met.calc_lambda(T_A_K)  # latent heat of vaporisation (J kg-1)
+    gama = met.calc_psicr(c_p, p, lbd) * 0.1  # psychrometric constant (kPa K-1)
+    vpd = (met.calc_vapor_pressure(T_A_K) - ea) * 0.1  # vapor pressure deficit (kPa)
 
     # Calculate LAI dependent parameters for dataset where LAI > 0
     omega0 = CI.calc_omega0_Kustas(LAI, f_c, x_LAD=x_LAD, isLAIeff=True)
@@ -330,7 +330,7 @@ def ESVEP(
                   gama[i] * (1 + r_vd[i] / r_av[i]) / (s[i] + gama[i] * (1 + r_vd[i] / r_av[i])) -\
                   vpd[i] / (s[i] + gama[i] * (1 + r_vd[i] / r_av[i])) + T_A_K[i]
         # Eq 8c
-        T_sw[i] = r_as[i] * (Rn_S[i] - G[i]) / (rho[i] + c_p[i]) *\
+        T_sw[i] = r_as[i] * (Rn_S[i] - G[i]) / (rho[i] * c_p[i]) *\
                   gama[i] / (s[i] + gama[i]) - vpd[i] / (s[i] + gama[i]) + T_A_K[i]
         # Eq 8d
         T_vw[i] = r_av[i] * Rn_C[i] / (rho[i] * c_p[i]) *\
@@ -387,8 +387,7 @@ def ESVEP(
             # correctios
             u_friction[i] = MO.calc_u_star(u[i], z_u[i], L[i], d_0[i], z_0M[i])
             u_friction[i] = np.asarray(np.maximum(u_friction_min, u_friction[i]))
-            u_friction_s[i] = MO.calc_u_star(u[i], z_u[i], L[i], np.zeros(d_0[i].shape),
-                                          np.zeros(z_0M[i].shape) + 0.005)
+            u_friction_s[i] = MO.calc_u_star(u[i], z_u[i], L[i], np.zeros(d_0[i].shape), z0_soil[i])
             u_friction_s[i] = np.asarray(np.maximum(u_friction_min, u_friction_s[i]))
 
     return [flag, T_S, T_C,  T_sd, T_vd, T_sw, T_vw, T_star, Ln_S, Ln_C, LE_C, H_C, LE_S, H_S, G, 

@@ -165,7 +165,7 @@ class PyESVEP(PyTSEB):
         '''
 
         [out_data['flag'][i], out_data['T_S1'][i], out_data['T_C1'][i], out_data['T_sd'][i],
-         out_data['T_vd'][i], out_data['T_sw'][i], out_data['T_vd'][i], out_data['T_star'][i],
+         out_data['T_vd'][i], out_data['T_sw'][i], out_data['T_vw'][i], out_data['T_star'][i],
          out_data['Ln_S1'][i], out_data['Ln_C1'][i], out_data['LE_C1'][i], out_data['H_C1'][i],
          out_data['LE_S1'][i], out_data['H_S1'][i], out_data['G1'][i], out_data['r_vw'][i],
          out_data['r_vd'][i], out_data['r_av'][i], out_data['r_as'][i], out_data['u_friction'][i],
