@@ -93,6 +93,9 @@ class ESVEPConfigFileInterface():
 
             self.params['output_file'] = config_data['output_file']
 
+            if 'subset' in config_data.keys():
+                self.params['subset'] = config_data['subset']
+
             self.ready = True
 
         except KeyError as e:
