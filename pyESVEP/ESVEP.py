@@ -40,6 +40,8 @@ ESVEP models
 * :func:`ESVEP` Implementation of the ESVEP model.
 
 '''
+from collections import deque
+import time
 
 import numpy as np
 
@@ -247,8 +249,9 @@ def ESVEP(
                         [Tr_K] * 21)
 
     # Create the output variables
-    [flag, T_S, T_C, T_sd, T_vd, T_sw, T_vw, T_star, Ln_S, Ln_C, LE_C, H_C, LE_S, H_S, G, r_vw,
-     r_vd, r_av, r_as, iterations] = [np.zeros(Tr_K.shape)+np.NaN for i in range(20)]
+    [flag, T_S, T_C, T_sd, T_vd, T_sw, T_vw, T_star, Rn_C, Rn_S, Ln_S, Ln_C, LE, H, LE_C, H_C,
+     LE_S, H_S, G, r_vw, r_vd, r_av, r_as, iterations] =\
+         [np.zeros(Tr_K.shape)+np.NaN for i in range(24)]
 
     # iteration of the Monin-Obukhov length
     if isinstance(UseL, bool):
@@ -281,8 +284,9 @@ def ESVEP(
     u_friction = np.asarray(np.maximum(u_friction_min, u_friction))
     u_friction_s = MO.calc_u_star(u, z_u, L, np.zeros(d_0.shape), z0_soil)
     u_friction_s = np.asarray(np.maximum(u_friction_min, u_friction_s))
-    L_old = np.ones(Tr_K.shape)
-    L_diff = np.asarray(np.ones(Tr_K.shape) * float('inf'))
+    L_queue = deque([np.array(L)], 6)
+    L_converged = np.asarray(np.zeros(Tr_K.shape)).astype(bool)
+    L_diff_max = np.inf
 
     # First assume that canopy temperature equals the minumum of Air or
     # radiometric T
@@ -291,23 +295,30 @@ def ESVEP(
 
     # Loop for estimating stability.
     # Stops when difference in consecutives L is below a given threshold
+    start_time = time.time()
+    loop_time = time.time()
     for n_iterations in range(max_iterations):
         i = flag != F_INVALID
-        if np.all(L_diff[i] < L_thres):
-            if L_diff[i].size == 0:
+        if np.all(L_converged[i]):
+            if L_converged[i].size == 0:
                 print("Finished iterations with no valid solution")
             else:
-                print("Finished interations with a max. L diff: " + str(np.max(L_diff[i])))
+                print("Finished interations with a max. L diff: " + str(L_diff_max))
             break
-        i = np.logical_and(L_diff >= L_thres, flag != F_INVALID)
-        print("Iteration " + str(n_iterations) + ", max. L diff: " + str(np.max(L_diff[i])))
+        current_time = time.time()
+        loop_duration = current_time - loop_time
+        loop_time = current_time
+        total_duration = loop_time - start_time
+        print("Iteration: %d, non-converged pixels: %d, max L diff: %f, total time: %f, loop time: %f" %
+              (n_iterations, np.sum(~L_converged[i]), L_diff_max, total_duration, loop_duration))
+        i = np.logical_and(~L_converged, flag != F_INVALID) 
         iterations[i] = n_iterations
 
         # Calculate net longwave radiation with current values of T_C and T_S
         Ln_C[i], Ln_S[i] = rad.calc_L_n_Kustas(
             T_C[i], T_S[i], L_dn[i], LAI[i], emis_C[i], emis_S[i])
-        Rn_C = Sn_C + Ln_C
-        Rn_S = Sn_S + Ln_S
+        Rn_C[i] = Sn_C[i] + Ln_C[i]
+        Rn_S[i] = Sn_S[i] + Ln_S[i]
 
         # Compute Soil Heat Flux
         G[i] = tseb.calc_G([calcG_params[0], calcG_array], Rn_S, i)
@@ -372,23 +383,39 @@ def ESVEP(
         H_S[i] = Rn_S[i] - G[i] - LE_S[i]
 
         # Calculate total fluxes
-        H = np.asarray(H_C + H_S)
-        LE = np.asarray(LE_C + LE_S)
+        H[i] = np.asarray(H_C[i] + H_S[i])
+        LE[i] = np.asarray(LE_C[i] + LE_S[i])
 
         # Now L can be recalculated and the difference between iterations
         # derived
         if isinstance(UseL, bool):
             L[i] = MO.calc_L(u_friction[i], T_A_K[i], rho[i], c_p[i], H[i], LE[i])
-            L_diff = np.asarray(np.fabs(L - L_old) / np.fabs(L_old))
-            L_diff[np.isnan(L_diff)] = float('inf')
-            L_old = np.array(L)
-            L_old[L_old == 0] = 1e-36
             # Calculate again the friction velocity with the new stability
             # correctios
             u_friction[i] = MO.calc_u_star(u[i], z_u[i], L[i], d_0[i], z_0M[i])
             u_friction[i] = np.asarray(np.maximum(u_friction_min, u_friction[i]))
             u_friction_s[i] = MO.calc_u_star(u[i], z_u[i], L[i], np.zeros(d_0[i].shape), z0_soil[i])
             u_friction_s[i] = np.asarray(np.maximum(u_friction_min, u_friction_s[i]))
+
+            # We check convergence against the value of L from previous iteration but as well
+            # against values from 2 or 3 iterations back. This is to catch situations (not
+            # infrequent) where L oscillates between 2 or 3 steady state values.
+            L_new = np.array(L)
+            L_new[L_new == 0] = 1e-36
+            L_queue.appendleft(L_new)
+            i = np.logical_and(~L_converged, flag != F_INVALID)
+            L_converged[i] = tseb._L_diff(L_queue[0][i], L_queue[1][i]) < L_thres
+            L_diff_max = np.max(tseb._L_diff(L_queue[0][i], L_queue[1][i]))
+            if len(L_queue) >= 4:
+                i = np.logical_and(~L_converged, flag != F_INVALID)
+                L_converged[i] = np.logical_and(tseb._L_diff(L_queue[0][i], L_queue[2][i]) < L_thres,
+                                                tseb._L_diff(L_queue[1][i], L_queue[3][i]) < L_thres)
+            if len(L_queue) == 6:
+                i = np.logical_and(~L_converged, flag != F_INVALID)
+                L_converged[i] = np.logical_and.reduce(
+                        (tseb._L_diff(L_queue[0][i], L_queue[3][i]) < L_thres,
+                         tseb._L_diff(L_queue[1][i], L_queue[4][i]) < L_thres,
+                         tseb._L_diff(L_queue[2][i], L_queue[5][i]) < L_thres))
 
     return [flag, T_S, T_C,  T_sd, T_vd, T_sw, T_vw, T_star, Ln_S, Ln_C, LE_C, H_C, LE_S, H_S, G, 
             r_vw, r_vd, r_av, r_as, u_friction, L, n_iterations]
